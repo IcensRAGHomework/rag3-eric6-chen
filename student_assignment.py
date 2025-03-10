@@ -59,7 +59,7 @@ def generate_hw01():
             index += 1
 
     print("method finished")
-    return None
+    return collection
 
 
 def generate_hw02(question, city, store_type, start_date, end_date):
