@@ -90,7 +90,43 @@ def generate_hw02(question, city, store_type, start_date, end_date):
 
 
 def generate_hw03(question, store_name, new_store_name, city, store_type):
-    pass
+    # use existing data from hw01
+    collection = generate_hw01()
+    udpate_target = collection.get(where={"name": store_name})
+    # print(udpate_target["metadatas"][0])
+    for a_metadata in udpate_target["metadatas"]:
+        a_metadata["new_store_name"] = new_store_name
+    collection.upsert(
+        ids=udpate_target.get("ids", []),
+        metadatas=udpate_target["metadatas"],
+        documents=udpate_target.get("documents", []),
+    )
+
+    similarity_threshold = 0.80
+    distance_threshold = 1 - similarity_threshold
+    n_results = 10
+    query = collection.query(
+        query_texts=[question],
+        n_results=n_results,
+        include=["metadatas", "distances"],
+        where={
+            "$and": [
+                {"type": {"$in": store_type}},
+                {"city": {"$in": city}},
+            ]
+        },
+    )
+    # seems query is already sorted so i decide to ignore sorting.
+    names = [
+        metadata.get(
+            "new_store_name",
+            # abuse default value parameter, assume "name" always exists.
+            metadata["name"],
+        )
+        for metadata, distance in zip(query["metadatas"][0], query["distances"][0])
+        if distance < distance_threshold
+    ]
+    return names
 
 
 def demo(question):
@@ -114,12 +150,23 @@ if __name__ == "__main__":
     # print(demo("test"))
     # generate_hw01()
     # 02: sample from readme
+    # print(
+    #     generate_hw02(
+    #         "我想要找有關茶餐點的店家",
+    #         ["宜蘭縣", "新北市"],
+    #         ["美食"],
+    #         datetime.datetime(2024, 4, 1),
+    #         datetime.datetime(2024, 5, 1),
+    #     )
+    # )
+
+    # 03: sample from readme
     print(
-        generate_hw02(
-            "我想要找有關茶餐點的店家",
-            ["宜蘭縣", "新北市"],
+        generate_hw03(
+            "我想要找南投縣的田媽媽餐廳，招牌是蕎麥麵",
+            "耄饕客棧",
+            "田媽媽（耄饕客棧）",
+            ["南投縣"],
             ["美食"],
-            datetime.datetime(2024, 4, 1),
-            datetime.datetime(2024, 5, 1),
         )
     )
