@@ -35,7 +35,7 @@ def generate_hw01():
     if collection.count != 0:
         # avoid data duplication
         print("already data in DB")
-        return
+        return collection
     # read from CSV
     with open(csv_file_path, encoding="utf8") as file:
         print("file opened")
