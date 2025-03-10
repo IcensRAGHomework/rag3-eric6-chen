@@ -63,7 +63,30 @@ def generate_hw01():
 
 
 def generate_hw02(question, city, store_type, start_date, end_date):
-    pass
+    similarity_threshold = 0.80
+    distance_threshold = 1 - similarity_threshold
+    n_results = 10
+    collection = generate_hw01()
+    query = collection.query(
+        query_texts=[question],
+        n_results=n_results,
+        include=["metadatas", "distances"],
+        where={
+            "$and": [
+                {"date": {"$gte": int(start_date.timestamp())}},
+                {"date": {"$lte": int(end_date.timestamp())}},
+                {"type": {"$in": store_type}},
+                {"city": {"$in": city}},
+            ]
+        },
+    )
+    # list comprehension
+    names = [
+        metadata["name"]
+        for metadata, distance in zip(query["metadatas"][0], query["distances"][0])
+        if distance < distance_threshold
+    ]
+    return names
 
 
 def generate_hw03(question, store_name, new_store_name, city, store_type):
@@ -89,4 +112,14 @@ def demo(question):
 if __name__ == "__main__":
     # print("test")
     # print(demo("test"))
-    generate_hw01()
+    # generate_hw01()
+    # 02: sample from readme
+    print(
+        generate_hw02(
+            "我想要找有關茶餐點的店家",
+            ["宜蘭縣", "新北市"],
+            ["美食"],
+            datetime.datetime(2024, 4, 1),
+            datetime.datetime(2024, 5, 1),
+        )
+    )
